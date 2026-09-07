@@ -1,0 +1,1270 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 14.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     50019,       1262]
+NotebookOptionsPosition[     48490,       1229]
+NotebookOutlinePosition[     48887,       1245]
+CellTagsIndexPosition[     48844,       1242]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Multiple-nutrient model numerical solution", "Title",
+ CellChangeTimes->{{3.993724814084658*^9, 3.993724892384969*^9}, {
+  3.993724973321138*^9, 
+  3.993724974464592*^9}},ExpressionUUID->"4d0b0f06-8607-4bc6-896c-\
+a2fd11f6102f"],
+
+Cell["\<\
+Disclaimer : This  notebook  was  written  and  revised  with  assistance  \
+from  OpenAI  Codex . The  author  remains  responsible  for  verifying  all  \
+results .
+   
+This  notebook  starts  with  ClearAll  and  extends  the  model  to  several \
+ shared  and  local  nutrient  pools . Evaluate  its  setup, equations, and  \
+parametric  solver  in  order  before  running  the  export  cell . This  \
+notebook  reproduces  data  used  in  figure  4.\
+\>", "Text",
+ CellChangeTimes->{{3.993724893678649*^9, 
+  3.993724912096208*^9}},ExpressionUUID->"8690b071-b9df-4e1b-acaa-\
+d3033d209f7b"],
+
+Cell[CellGroupData[{
+
+Cell["Parameters and reproducible species traits", "Subsection",ExpressionUUID->"11e62eb9-1d34-4a20-aa3c-352c76de0b42"],
+
+Cell["\<\
+Set the common constants and species count. The explicit alpha vector that \
+follows the exploratory RandomReal draw fixes the trait realization used by \
+this analysis.\
+\>", "Text",ExpressionUUID->"8b4b3236-97e3-4c50-87a2-eebe26e386a4"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{"Multiple", " ", "Nutrients"}], "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"ClearAll", "[", "\"\<Global`*\>\"", "]"}], "\[IndentingNewLine]", 
+   
+   RowBox[{
+    RowBox[{"k", "=", "1"}], ";", " ", 
+    RowBox[{"\[Gamma]", "=", "0.01"}], ";", " ", 
+    RowBox[{"Rstar", "=", "5"}], ";", "  ", 
+    RowBox[{"S", "=", "50"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Fix", " ", "the", " ", "random", " ", "stream", " ", "for", " ", 
+     "reproducible", " ", "species", " ", "traits"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"SeedRandom", "[", "1", "]"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"\[Alpha]", "=", 
+     RowBox[{"RandomReal", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"1", ",", "5"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", "S"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Alpha]", "=", 
+     RowBox[{"\[Alpha]", "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.975084002174608*^9, 3.975084002803423*^9}, {
+  3.975109637948531*^9, 3.975109643061743*^9}, {3.9812991925050707`*^9, 
+  3.981299229907764*^9}, {3.981299745503381*^9, 3.981299765791897*^9}, {
+  3.981300223136689*^9, 3.98130022590821*^9}, {3.98132171570161*^9, 
+  3.981321740449651*^9}, {3.981322319720965*^9, 3.981322323785096*^9}, {
+  3.981322553787936*^9, 3.981322586121488*^9}, {3.981617734040691*^9, 
+  3.981617754454381*^9}, {3.981987817284535*^9, 3.981987825457077*^9}, {
+  3.993595944930952*^9, 3.993595968071524*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"2cf933a6-ce85-45ce-879a-d9b3a3172001"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["State vectors, initial conditions, and equations", "Subsection",ExpressionUUID->"de9be5d9-8061-42d7-958a-0506aa704040"],
+
+Cell["\<\
+Construct species abundances plus the shared and local nutrient pools, then \
+assemble one symbolic equation template. The scenario builder activates alpha \
+and cumulative Delta1 through Delta5 combinations without duplicating or \
+changing the underlying equations.\
+\>", "Text",ExpressionUUID->"681d911c-81f6-46ab-86df-0e607ab07693"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+   "Fix", " ", "the", " ", "random", " ", "stream", " ", "before", " ", 
+    "generating", " ", "the", " ", "five", " ", "response", " ", "vectors"}], 
+   "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"\[Delta]1", "=", 
+     RowBox[{"RandomReal", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"0.1", ",", "0.1"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", "S"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Delta]1", "=", 
+     RowBox[{"\[Delta]1", "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"\[Delta]2", "=", 
+     RowBox[{"RandomReal", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"0.1", ",", "0.1"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", "S"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Delta]2", "=", 
+     RowBox[{"\[Delta]2", "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"\[Delta]3", "=", 
+     RowBox[{"RandomReal", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"0.1", ",", "0.1"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", "S"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Delta]3", "=", 
+     RowBox[{"\[Delta]3", "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"\[Delta]4", "=", 
+     RowBox[{"RandomReal", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"0.1", ",", "0.1"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", "S"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Delta]4", "=", 
+     RowBox[{"\[Delta]4", "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"\[Delta]5", "=", 
+     RowBox[{"RandomReal", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"0.1", ",", "0.1"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", "S"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Delta]5", "=", 
+     RowBox[{"\[Delta]5", "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+     RowBox[{"Save", " ", "the", " ", "seeded", " ", "traits"}], ",", " ", 
+     RowBox[{
+     "then", " ", "use", " ", "one", " ", "symbolic", " ", "placeholder", " ",
+       "per", " ", "species", " ", "in", " ", "the", " ", "equation", " ", 
+      RowBox[{"template", "."}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"alphaTraits", "=", "\[Alpha]"}], ";", 
+    RowBox[{"deltaTraits", "=", 
+     RowBox[{"{", 
+      RowBox[{
+      "\[Delta]1", ",", "\[Delta]2", ",", "\[Delta]3", ",", "\[Delta]4", ",", 
+       "\[Delta]5"}], "}"}]}], ";", 
+    RowBox[{"zeroTraits", "=", 
+     RowBox[{"ConstantArray", "[", 
+      RowBox[{"0.`", ",", "S"}], "]"}]}], ";", 
+    RowBox[{"alphaPlaceholders", "=", 
+     RowBox[{"Array", "[", 
+      RowBox[{"alphaTrait", ",", "S"}], "]"}]}], ";", 
+    RowBox[{"deltaPlaceholders", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"Array", "[", 
+        RowBox[{
+         RowBox[{"Symbol", "[", 
+          RowBox[{"\"\<delta\>\"", "<>", 
+           RowBox[{"ToString", "[", "poorIndex", "]"}], "<>", 
+           "\"\<Trait\>\""}], "]"}], ",", "S"}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"poorIndex", ",", 
+         RowBox[{"Length", "[", "deltaTraits", "]"}]}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"\[Alpha]", "=", "alphaPlaceholders"}], ";", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "\[Delta]1", ",", "\[Delta]2", ",", "\[Delta]3", ",", "\[Delta]4", ",", 
+       "\[Delta]5"}], "}"}], "=", "deltaPlaceholders"}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"n", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<n\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"T", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<T\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Ttilde", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<Ttilde\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Tbar", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<Tbar\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Tbar1new", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<Tbar1new\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Tbar2new", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<Tbar2new\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Tbar3new", "[", "t_", "]"}], "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<Tbar3new\>\"", "<>", 
+          RowBox[{"ToString", "@", "i"}]}], "]"}], "[", "t", "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "S"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"n0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"1", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"T0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Rstar", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Ttilde0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Rstar", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Tbar0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Rstar", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Tbar1new0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Rstar", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Tbar2new0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Rstar", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Tbar3new0", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Rstar", ",", "S"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"incond", "=", 
+     RowBox[{"Join", "[", 
+      RowBox[{
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"n", "[", "0", "]"}], "==", "n0"}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"T", "[", "0", "]"}], "==", "T0"}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"Ttilde", "[", "0", "]"}], "==", "Ttilde0"}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"Tbar", "[", "0", "]"}], "==", "Tbar0"}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"Tbar1new", "[", "0", "]"}], "==", "Tbar1new0"}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"Tbar2new", "[", "0", "]"}], "==", "Tbar2new0"}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"Tbar3new", "[", "0", "]"}], "==", "Tbar3new0"}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"R", "[", "0", "]"}], "==", "Rstar"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"Rtilde", "[", "0", "]"}], "==", "Rstar"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"Rbar", "[", "0", "]"}], "==", "Rstar"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"Rbar1", "[", "0", "]"}], "==", "Rstar"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"Rbar2", "[", "0", "]"}], "==", "Rstar"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"Rbar3", "[", "0", "]"}], "==", "Rstar"}], "}"}]}], "]"}]}], 
+    ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"eq", "=", 
+     RowBox[{"Join", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"R", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{"Rstar", " ", "-", " ", 
+          RowBox[{"R", "[", "t", "]"}], "-", 
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"S", " ", 
+              RowBox[{"R", "[", "t", "]"}]}], " ", "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"T", "[", "t", "]"}], "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Gamma]", " ", 
+           RowBox[{"R", "[", "t", "]"}], " ", 
+           RowBox[{"(", 
+            RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+           RowBox[{"Total", "[", 
+            RowBox[{"Thread", "[", 
+             RowBox[{"\[Alpha]", " ", 
+              RowBox[{"n", "[", "t", "]"}]}], "]"}], "]"}]}]}]}], "}"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Rtilde", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{"Rstar", " ", "-", " ", 
+          RowBox[{"Rtilde", "[", "t", "]"}], "-", 
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"S", " ", 
+              RowBox[{"Rtilde", "[", "t", "]"}]}], " ", "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"Ttilde", "[", "t", "]"}], "]"}]}], ")"}]}], " ", "-", 
+          " ", 
+          RowBox[{"\[Gamma]", " ", 
+           RowBox[{"Rtilde", "[", "t", "]"}], " ", 
+           RowBox[{"(", 
+            RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+           RowBox[{"Total", "[", 
+            RowBox[{"Thread", "[", 
+             RowBox[{"\[Delta]1", " ", 
+              RowBox[{"n", "[", "t", "]"}]}], "]"}], "]"}]}]}]}], "}"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Rbar", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{"Rstar", " ", "-", " ", 
+          RowBox[{"Rbar", "[", "t", "]"}], "-", 
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"S", " ", 
+              RowBox[{"Rbar", "[", "t", "]"}]}], " ", "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"Tbar", "[", "t", "]"}], "]"}]}], ")"}]}], " ", "-", 
+          " ", 
+          RowBox[{"\[Gamma]", " ", 
+           RowBox[{"Rbar", "[", "t", "]"}], " ", 
+           RowBox[{"(", 
+            RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+           RowBox[{"Total", "[", 
+            RowBox[{"Thread", "[", 
+             RowBox[{"\[Delta]2", " ", 
+              RowBox[{"n", "[", "t", "]"}]}], "]"}], "]"}]}]}]}], "}"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Rbar1", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{"Rstar", " ", "-", " ", 
+          RowBox[{"Rbar1", "[", "t", "]"}], "-", 
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"S", " ", 
+              RowBox[{"Rbar1", "[", "t", "]"}]}], " ", "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"Tbar1new", "[", "t", "]"}], "]"}]}], ")"}]}], " ", "-",
+           " ", 
+          RowBox[{"\[Gamma]", " ", 
+           RowBox[{"Rbar1", "[", "t", "]"}], " ", 
+           RowBox[{"(", 
+            RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+           RowBox[{"Total", "[", 
+            RowBox[{"Thread", "[", 
+             RowBox[{"\[Delta]3", " ", 
+              RowBox[{"n", "[", "t", "]"}]}], "]"}], "]"}]}]}]}], "}"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Rbar2", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{"Rstar", " ", "-", " ", 
+          RowBox[{"Rbar2", "[", "t", "]"}], "-", 
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"S", " ", 
+              RowBox[{"Rbar2", "[", "t", "]"}]}], " ", "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"Tbar2new", "[", "t", "]"}], "]"}]}], ")"}]}], " ", "-",
+           " ", 
+          RowBox[{"\[Gamma]", " ", 
+           RowBox[{"Rbar2", "[", "t", "]"}], " ", 
+           RowBox[{"(", 
+            RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+           RowBox[{"Total", "[", 
+            RowBox[{"Thread", "[", 
+             RowBox[{"\[Delta]4", " ", 
+              RowBox[{"n", "[", "t", "]"}]}], "]"}], "]"}]}]}]}], "}"}], ",", 
+       
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Rbar3", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{"Rstar", " ", "-", " ", 
+          RowBox[{"Rbar3", "[", "t", "]"}], "-", 
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"S", " ", 
+              RowBox[{"Rbar3", "[", "t", "]"}]}], " ", "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"Tbar3new", "[", "t", "]"}], "]"}]}], ")"}]}], " ", "-",
+           " ", 
+          RowBox[{"\[Gamma]", " ", 
+           RowBox[{"Rbar3", "[", "t", "]"}], " ", 
+           RowBox[{"(", 
+            RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+           RowBox[{"Total", "[", 
+            RowBox[{"Thread", "[", 
+             RowBox[{"\[Delta]5", " ", 
+              RowBox[{"n", "[", "t", "]"}]}], "]"}], "]"}]}]}]}], "}"}], ",", 
+       
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"n", "[", "t", "]"}], ",", "t"}], "]"}], "==", " ", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"n", "[", "t", "]"}], 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"\[Theta]", " ", 
+              RowBox[{"(", 
+               RowBox[{
+                RowBox[{"\[Alpha]", " ", 
+                 RowBox[{"T", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]1", " ", 
+                 RowBox[{"Ttilde", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]2", " ", 
+                 RowBox[{"Tbar", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]3", " ", 
+                 RowBox[{"Tbar1new", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]4", " ", 
+                 RowBox[{"Tbar2new", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]5", " ", 
+                 RowBox[{"Tbar3new", "[", "t", "]"}]}]}], ")"}]}], "+", " ", 
+             RowBox[{
+              RowBox[{"(", 
+               RowBox[{"1", "-", "\[Theta]"}], ")"}], " ", 
+              RowBox[{"(", 
+               RowBox[{
+                RowBox[{"\[Alpha]", " ", 
+                 RowBox[{"R", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]1", " ", 
+                 RowBox[{"Rtilde", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]2", " ", 
+                 RowBox[{"Rbar", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]3", " ", 
+                 RowBox[{"Rbar1", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]4", " ", 
+                 RowBox[{"Rbar2", "[", "t", "]"}]}], "+", 
+                RowBox[{"\[Delta]5", " ", 
+                 RowBox[{"Rbar3", "[", "t", "]"}]}]}], ")"}]}]}], " ", 
+            ")"}]}], "-", 
+          RowBox[{"k", " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}], "\[IndentingNewLine]", 
+       ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"T", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"R", "[", "t", "]"}], " ", "-", " ", 
+             RowBox[{"T", "[", "t", "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Alpha]", " ", "\[Gamma]", " ", "\[Theta]", " ", 
+           RowBox[{"T", "[", "t", "]"}], " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Ttilde", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"Rtilde", "[", "t", "]"}], " ", "-", " ", 
+             RowBox[{"Ttilde", "[", "t", "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Delta]1", " ", "\[Gamma]", " ", "\[Theta]", " ", 
+           RowBox[{"Ttilde", "[", "t", "]"}], " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Tbar", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"Rbar", "[", "t", "]"}], " ", "-", " ", 
+             RowBox[{"Tbar", "[", "t", "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Delta]2", " ", "\[Gamma]", " ", "\[Theta]", " ", 
+           RowBox[{"Tbar", "[", "t", "]"}], " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Tbar1new", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"Rbar1", "[", "t", "]"}], " ", "-", " ", 
+             RowBox[{"Tbar1new", "[", "t", "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Delta]3", " ", "\[Gamma]", " ", "\[Theta]", " ", 
+           RowBox[{"Tbar1new", "[", "t", "]"}], " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Tbar2new", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"Rbar2", "[", "t", "]"}], " ", "-", " ", 
+             RowBox[{"Tbar2new", "[", "t", "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Delta]4", " ", "\[Gamma]", " ", "\[Theta]", " ", 
+           RowBox[{"Tbar2new", "[", "t", "]"}], " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}], ",", 
+       RowBox[{"Thread", "[", 
+        RowBox[{
+         RowBox[{"D", "[", 
+          RowBox[{
+           RowBox[{"Tbar3new", "[", "t", "]"}], ",", "t"}], "]"}], "==", 
+         RowBox[{
+          RowBox[{"\[Beta]", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"Rbar3", "[", "t", "]"}], " ", "-", " ", 
+             RowBox[{"Tbar3new", "[", "t", "]"}]}], ")"}]}], " ", "-", " ", 
+          RowBox[{"\[Delta]5", " ", "\[Gamma]", " ", "\[Theta]", " ", 
+           RowBox[{"Tbar3new", "[", "t", "]"}], " ", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], "]"}]}], "]"}]}], 
+    ";"}]}]}]], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwd0l1I02EAxeGphTLFoE1NlGpWy00MyYEwh21YQxZL2lwkWiwlNyOolpWI
+kS4bubJCQbRMrxT8ouFHseWc/v0MUTETodFaolaupRdTS831nvfi8Fyemx8v
+74bqaiCLxRKRwayR0lTXa69M7q6VwAfKFQ1cVvAuwmhfQC7c36LWwqHFqgJY
+n6K/C3tjmPtQyo6rhCNht6qgUNNUDbu38utg/97QJshbv2mDIfbxPngtdfID
+DAsyT8FL/CtrsHnjCXX8VMQfKN6M2IEN50zsr8SpdAd1yF6qgh+9LdQibYcO
+isbS9ZBxRircRFe8gzp7r8noIUZ9mqe+r+8WsBu9sjTTN6pwPfnEUeJ5riEb
+5pcOmmHgq7ynkMuJrYajnEM1cLhrrBsK20Q9UB4/wcCSnodf4MZ04Q+467NS
+RQkHgo8Rs0vSqK39pmgYMtdB5a7aEmEZe4vqsa6lwty54xJYkaSWQ8fcLPXZ
+9ed2PlElCB+ATLOz7CRxJDHACItXssZhQaaJurmH+xeqzOXUhm0NNxn/CW1U
+ycSkHAZadBkwx9VvgI99h29DbtcdMzXTTj29y+qE2gUddcqzlCEiZsW0K+EL
+fXMu7AsuuAxj+Z3/UogutXsXHrTa3kS1emV5vjMWGNc7M2AlKl42DkJp8ZFg
+G9Gyrz0ECivnDTC0XlgEC2Md7UNEY2+tBTpLBI5h4nRO0AAUMzM/oW51m6qv
+8J/VtHllnPxRJXz7SFx+gbgYXkft8f9ySAe9MrdniYE16oVlDVEb2fIdsvw7
+n38zpNukd074H6Q9wkA=
+  "],
+ CellLabel->"In[5]:=",ExpressionUUID->"4ab0f33f-6fbc-4157-b5bf-f7d6bd170fd2"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{
+    "Keep", " ", "an", " ", "unevaluated", " ", "equation", " ", "template"}],
+     ",", " ", 
+    RowBox[{
+    "then", " ", "activate", " ", "only", " ", "the", " ", "requested", " ", 
+     "nutrient", " ", 
+     RowBox[{"traits", "."}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"eqTemplate", "=", "eq"}], ";", 
+    RowBox[{"\[Alpha]", "=", "alphaTraits"}], ";", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "\[Delta]1", ",", "\[Delta]2", ",", "\[Delta]3", ",", "\[Delta]4", ",", 
+       "\[Delta]5"}], "}"}], "=", "deltaTraits"}], ";", 
+    RowBox[{"ClearAll", "[", "buildNutrientEquations", "]"}], ";", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"buildNutrientEquations", "[", 
+       RowBox[{"alphaPresent_", ",", "poorNutrientCount_Integer"}], "]"}], "/;", 
+      RowBox[{"0", "<=", "poorNutrientCount", "<=", 
+       RowBox[{"Length", "[", "deltaTraits", "]"}]}]}], ":=", 
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"activeAlpha", ",", "activeDeltas", ",", "traitRules"}], 
+        "}"}], ",", 
+       RowBox[{
+        RowBox[{"activeAlpha", "=", 
+         RowBox[{"If", "[", 
+          RowBox[{
+           RowBox[{"TrueQ", "[", "alphaPresent", "]"}], ",", "alphaTraits", 
+           ",", "zeroTraits"}], "]"}]}], ";", 
+        RowBox[{"activeDeltas", "=", 
+         RowBox[{"MapIndexed", "[", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"If", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"First", "[", "#2", "]"}], "<=", "poorNutrientCount"}],
+               ",", "#1", ",", "zeroTraits"}], "]"}], "&"}], ",", 
+           "deltaTraits"}], "]"}]}], ";", 
+        RowBox[{"traitRules", "=", 
+         RowBox[{"Join", "[", 
+          RowBox[{
+           RowBox[{"Thread", "[", 
+            RowBox[{"alphaPlaceholders", "->", "activeAlpha"}], "]"}], ",", 
+           RowBox[{"Flatten", "[", 
+            RowBox[{"MapThread", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"Thread", "[", 
+                RowBox[{"#1", "->", "#2"}], "]"}], "&"}], ",", 
+              RowBox[{"{", 
+               RowBox[{"deltaPlaceholders", ",", "activeDeltas"}], "}"}]}], 
+             "]"}], "]"}]}], "]"}]}], ";", 
+        RowBox[{"eqTemplate", "/.", " ", "traitRules"}]}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "List", " ", "the", " ", "five", " ", "requested", " ", "cumulative", " ",
+      "nutrient", " ", "scenarios", " ", "in", " ", "Excel", " ", "tab", " ", 
+     
+     RowBox[{"order", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"nutrientScenarios", "=", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"Association", "[", 
+        RowBox[{
+         RowBox[{"\"\<sheet\>\"", "->", "\"\<alpha_only\>\""}], ",", 
+         RowBox[{"\"\<alphaPresent\>\"", "->", "True"}], ",", 
+         RowBox[{"\"\<poorNutrientCount\>\"", "->", "0"}]}], "]"}], ",", 
+       RowBox[{"Association", "[", 
+        RowBox[{
+         RowBox[{"\"\<sheet\>\"", "->", "\"\<delta1_only\>\""}], ",", 
+         RowBox[{"\"\<alphaPresent\>\"", "->", "False"}], ",", 
+         RowBox[{"\"\<poorNutrientCount\>\"", "->", "1"}]}], "]"}], ",", 
+       RowBox[{"Association", "[", 
+        RowBox[{
+         RowBox[{"\"\<sheet\>\"", "->", "\"\<alpha_delta1\>\""}], ",", 
+         RowBox[{"\"\<alphaPresent\>\"", "->", "True"}], ",", 
+         RowBox[{"\"\<poorNutrientCount\>\"", "->", "1"}]}], "]"}], ",", 
+       RowBox[{"Association", "[", 
+        RowBox[{
+         RowBox[{"\"\<sheet\>\"", "->", "\"\<alpha_delta1_delta2\>\""}], ",", 
+         
+         RowBox[{"\"\<alphaPresent\>\"", "->", "True"}], ",", 
+         RowBox[{"\"\<poorNutrientCount\>\"", "->", "2"}]}], "]"}], ",", 
+       RowBox[{"Association", "[", 
+        RowBox[{
+         RowBox[{
+         "\"\<sheet\>\"", "->", "\"\<alpha_delta1_delta2_delta3\>\""}], ",", 
+         RowBox[{"\"\<alphaPresent\>\"", "->", "True"}], ",", 
+         RowBox[{"\"\<poorNutrientCount\>\"", "->", "3"}]}], "]"}]}], "}"}]}],
+     ";", 
+    RowBox[{"scenarioEquations", "=", 
+     RowBox[{"Association", "[", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"scenario", "[", "\"\<sheet\>\"", "]"}], "->", 
+         RowBox[{"buildNutrientEquations", "[", 
+          RowBox[{
+           RowBox[{"scenario", "[", "\"\<alphaPresent\>\"", "]"}], ",", 
+           RowBox[{"scenario", "[", "\"\<poorNutrientCount\>\"", "]"}]}], 
+          "]"}]}], ",", 
+        RowBox[{"{", 
+         RowBox[{"scenario", ",", "nutrientScenarios"}], "}"}]}], "]"}], 
+      "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"eq", "=", 
+     RowBox[{"buildNutrientEquations", "[", 
+      RowBox[{"True", ",", 
+       RowBox[{"Length", "[", "deltaTraits", "]"}]}], "]"}]}], 
+    ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.993640699761632*^9, 3.993640700056974*^9}},
+ CellLabel->"In[27]:=",ExpressionUUID->"7a4d10a2-5244-4a42-9bd7-8a9e8bdade11"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Export sweeps", "Subsection",
+ CellChangeTimes->{{3.993640744039547*^9, 
+  3.993640785411672*^9}},ExpressionUUID->"a13896cc-52f7-40f8-950e-\
+09b6b0ed2773"],
+
+Cell["\<\
+Build all requested nutrient-presence cases as independent parallel tasks and \
+use the existing extinction rule plus guarded steady-state stopping. The \
+first workbook sweeps theta for five named scenarios; the second holds theta \
+at 0, 0.5, and 1 while increasing the number of poor nutrients.\
+\>", "Text",ExpressionUUID->"170001d5-1874-4a06-8ad8-6739943c11b2"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{"Configure", " ", "scheduled", " ", "steady"}], "-", 
+    RowBox[{
+    "state", " ", "checks", " ", "shared", " ", "by", " ", "every", " ", 
+     "multiple"}], "-", 
+    RowBox[{"nutrient", " ", 
+     RowBox[{"task", "."}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"lim", "=", "5000"}], ";", 
+    RowBox[{"thresh", "=", 
+     FractionBox["1", 
+      SuperscriptBox["10", "3"]]}], ";", 
+    RowBox[{"betaForNutrientSweeps", "=", "1"}], ";", 
+    RowBox[{"thetaGrid", "=", 
+     RowBox[{"N", "[", 
+      RowBox[{"Range", "[", 
+       RowBox[{"0", ",", "1", ",", "0.01`"}], "]"}], "]"}]}], ";", 
+    RowBox[{"thetaCases", "=", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0.5`", ",", "1"}], "}"}]}], ";", 
+    RowBox[{"poorNutrientCounts", "=", 
+     RowBox[{"Range", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"Length", "[", "deltaTraits", "]"}]}], "]"}]}], ";", 
+    RowBox[{"steadyStateTolerance", "=", 
+     FractionBox["1", 
+      SuperscriptBox["10", "4"]]}], ";", 
+    RowBox[{"steadyStateMinimumTime", "=", "100"}], ";", 
+    RowBox[{"steadyStateCheckInterval", "=", "25"}], ";", 
+    RowBox[{"steadyStateAbundanceSafetyFactor", "=", "10"}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+     RowBox[{"Solve", " ", "one", " ", "nutrient"}], "-", 
+     RowBox[{
+     "presence", " ", "case", " ", "and", " ", "return", " ", "its", " ", 
+      "survivor", " ", "fraction", " ", "plus", " ", "actual", " ", 
+      "stopping", " ", 
+      RowBox[{"time", "."}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"ClearAll", "[", 
+     RowBox[{"integrationEndTime", ",", "multipleNutrientSurvivalAt"}], "]"}],
+     ";", 
+    RowBox[{
+     RowBox[{"integrationEndTime", "[", "solution_List", "]"}], ":=", 
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", "functions", "}"}], ",", 
+       RowBox[{
+        RowBox[{"functions", "=", 
+         RowBox[{"Head", "/@", "solution"}]}], ";", 
+        RowBox[{"Min", "[", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"Last", "[", 
+             RowBox[{"First", "[", 
+              RowBox[{"#1", "[", "\"\<Domain\>\"", "]"}], "]"}], "]"}], "&"}],
+            ")"}], "/@", "functions"}], "]"}]}]}], "]"}]}], ";", 
+    RowBox[{
+     RowBox[{"multipleNutrientSurvivalAt", "[", 
+      RowBox[{"alphaPresent_", ",", "poorNutrientCount_Integer", ",", 
+       RowBox[{"thetaValue_", "?", "NumericQ"}], ",", 
+       RowBox[{"betaValue_", "?", "NumericQ"}]}], "]"}], ":=", 
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+        "numericEquations", ",", "equationRightSides", ",", "stateVector", 
+         ",", "extinctionConditions", ",", "extinctionActions", ",", 
+         "extinctionEvents", ",", "classificationStable", ",", 
+         "steadyStateCheckTimes", ",", "steadyStateEvents", ",", "solution", 
+         ",", "finalTime", ",", "finalState", ",", "finalAbundances"}], "}"}],
+        ",", 
+       RowBox[{
+        RowBox[{"numericEquations", "=", 
+         RowBox[{
+          RowBox[{"buildNutrientEquations", "[", 
+           RowBox[{"alphaPresent", ",", "poorNutrientCount"}], "]"}], "/.", 
+          " ", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"\[Theta]", "->", "thetaValue"}], ",", 
+            RowBox[{"\[Beta]", "->", "betaValue"}]}], "}"}]}]}], ";", 
+        RowBox[{"equationRightSides", "=", 
+         RowBox[{"Last", "/@", "numericEquations"}]}], ";", 
+        RowBox[{"stateVector", "=", 
+         RowBox[{"Join", "[", 
+          RowBox[{
+           RowBox[{"n", "[", "t", "]"}], ",", 
+           RowBox[{"T", "[", "t", "]"}], ",", 
+           RowBox[{"Ttilde", "[", "t", "]"}], ",", 
+           RowBox[{"Tbar", "[", "t", "]"}], ",", 
+           RowBox[{"Tbar1new", "[", "t", "]"}], ",", 
+           RowBox[{"Tbar2new", "[", "t", "]"}], ",", 
+           RowBox[{"Tbar3new", "[", "t", "]"}], ",", 
+           RowBox[{"{", 
+            RowBox[{
+             RowBox[{"R", "[", "t", "]"}], ",", 
+             RowBox[{"Rtilde", "[", "t", "]"}], ",", 
+             RowBox[{"Rbar", "[", "t", "]"}], ",", 
+             RowBox[{"Rbar1", "[", "t", "]"}], ",", 
+             RowBox[{"Rbar2", "[", "t", "]"}], ",", 
+             RowBox[{"Rbar3", "[", "t", "]"}]}], "}"}]}], "]"}]}], ";", 
+        RowBox[{"extinctionConditions", "=", 
+         RowBox[{"Thread", "[", 
+          RowBox[{
+           RowBox[{"n", "[", "t", "]"}], "<", "thresh"}], "]"}]}], ";", 
+        RowBox[{"extinctionActions", "=", 
+         RowBox[{"Thread", "[", 
+          RowBox[{
+           RowBox[{"n", "[", "t", "]"}], "->", "0"}], "]"}]}], ";", 
+        RowBox[{"extinctionEvents", "=", 
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"WhenEvent", "[", 
+            RowBox[{
+             RowBox[{"Evaluate", "[", 
+              RowBox[{"Extract", "[", 
+               RowBox[{"extinctionConditions", ",", "speciesIndex"}], "]"}], 
+              "]"}], ",", 
+             RowBox[{"Evaluate", "[", 
+              RowBox[{"Extract", "[", 
+               RowBox[{"extinctionActions", ",", "speciesIndex"}], "]"}], 
+              "]"}]}], "]"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"speciesIndex", ",", "S"}], "}"}]}], "]"}]}], ";", 
+        RowBox[{"classificationStable", "=", 
+         RowBox[{"And", "@@", 
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"#1", "==", "0"}], "||", 
+              RowBox[{"#1", ">=", 
+               RowBox[{
+               "steadyStateAbundanceSafetyFactor", " ", "thresh"}]}]}], "&"}],
+             ")"}], "/@", 
+           RowBox[{"n", "[", "t", "]"}]}]}]}], ";", 
+        RowBox[{"steadyStateCheckTimes", "=", 
+         RowBox[{"Range", "[", 
+          RowBox[{
+          "steadyStateMinimumTime", ",", "lim", ",", 
+           "steadyStateCheckInterval"}], "]"}]}], ";", 
+        RowBox[{"steadyStateEvents", "=", 
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"With", "[", 
+            RowBox[{
+             RowBox[{"{", 
+              RowBox[{"checkTime", "=", "scheduledTime"}], "}"}], ",", 
+             RowBox[{"WhenEvent", "[", 
+              RowBox[{
+               RowBox[{"Evaluate", "[", 
+                RowBox[{
+                 RowBox[{"t", "==", "checkTime"}], "&&", 
+                 RowBox[{
+                  RowBox[{"Max", "[", 
+                   RowBox[{"Abs", "[", "equationRightSides", "]"}], "]"}], 
+                  "<", "steadyStateTolerance"}], "&&", 
+                 "classificationStable"}], "]"}], ",", 
+               "\"\<StopIntegration\>\""}], "]"}]}], "]"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"scheduledTime", ",", "steadyStateCheckTimes"}], "}"}]}], 
+          "]"}]}], ";", 
+        RowBox[{"solution", "=", 
+         RowBox[{"NDSolveValue", "[", 
+          RowBox[{
+           RowBox[{"Join", "[", 
+            RowBox[{
+            "numericEquations", ",", "incond", ",", "extinctionEvents", ",", 
+             "steadyStateEvents"}], "]"}], ",", "stateVector", ",", 
+           RowBox[{"{", 
+            RowBox[{"t", ",", "0", ",", "lim"}], "}"}]}], "]"}]}], ";", 
+        RowBox[{"finalTime", "=", 
+         RowBox[{"integrationEndTime", "[", "solution", "]"}]}], ";", 
+        RowBox[{"finalState", "=", 
+         RowBox[{"N", "[", 
+          RowBox[{"solution", "/.", " ", 
+           RowBox[{"t", "->", "finalTime"}]}], "]"}]}], ";", 
+        RowBox[{"finalAbundances", "=", 
+         RowBox[{"Take", "[", 
+          RowBox[{"finalState", ",", "S"}], "]"}]}], ";", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"N", "[", 
+           FractionBox[
+            RowBox[{"Count", "[", 
+             RowBox[{"finalAbundances", ",", 
+              RowBox[{"abundance_", "/;", 
+               RowBox[{
+                RowBox[{"NumericQ", "[", "abundance", "]"}], "&&", 
+                RowBox[{"abundance", ">", "thresh"}]}]}]}], "]"}], "S"], 
+           "]"}], ",", "finalTime"}], "}"}]}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Create", " ", "all", " ", "workbook", " ", "rows", " ", "as", " ", 
+     "independent", " ", "tasks", " ", "before", " ", "starting", " ", 
+     "parallel", " ", 
+     RowBox[{"kernels", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"thetaScenarioTasks", "=", 
+     RowBox[{"Flatten", "[", 
+      RowBox[{
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"Association", "[", 
+          RowBox[{
+           RowBox[{"\"\<kind\>\"", "->", "\"\<theta\>\""}], ",", 
+           RowBox[{"\"\<sheet\>\"", "->", 
+            RowBox[{"scenario", "[", "\"\<sheet\>\"", "]"}]}], ",", 
+           RowBox[{"\"\<alphaPresent\>\"", "->", 
+            RowBox[{"scenario", "[", "\"\<alphaPresent\>\"", "]"}]}], ",", 
+           RowBox[{"\"\<poorNutrientCount\>\"", "->", 
+            RowBox[{"scenario", "[", "\"\<poorNutrientCount\>\"", "]"}]}], 
+           ",", 
+           RowBox[{"\"\<theta\>\"", "->", "thetaValue"}]}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"scenario", ",", "nutrientScenarios"}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"thetaValue", ",", "thetaGrid"}], "}"}]}], "]"}], ",", 
+       "1"}], "]"}]}], ";", 
+    RowBox[{"poorNutrientTasks", "=", 
+     RowBox[{"Flatten", "[", 
+      RowBox[{
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"Association", "[", 
+          RowBox[{
+           RowBox[{"\"\<kind\>\"", "->", "\"\<poor\>\""}], ",", 
+           RowBox[{"\"\<sheet\>\"", "->", 
+            RowBox[{"\"\<theta=\>\"", "<>", 
+             RowBox[{"ToString", "[", "thetaValue", "]"}]}]}], ",", 
+           RowBox[{"\"\<alphaPresent\>\"", "->", "True"}], ",", 
+           RowBox[{"\"\<poorNutrientCount\>\"", "->", "poorNutrientCount"}], 
+           ",", 
+           RowBox[{"\"\<theta\>\"", "->", "thetaValue"}]}], "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"thetaValue", ",", "thetaCases"}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"poorNutrientCount", ",", "poorNutrientCounts"}], "}"}]}], 
+        "]"}], ",", "1"}], "]"}]}], ";", 
+    RowBox[{"nutrientSweepTasks", "=", 
+     RowBox[{"Join", "[", 
+      RowBox[{"thetaScenarioTasks", ",", "poorNutrientTasks"}], "]"}]}], 
+    ";"}], "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Distribute", " ", "the", " ", "model", " ", "once", " ", "and", " ", 
+     "calculate", " ", "all", " ", "nutrient", " ", "tasks", " ", 
+     RowBox[{"concurrently", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"If", "[", 
+     RowBox[{
+      RowBox[{"$KernelCount", "==", "0"}], ",", 
+      RowBox[{"LaunchKernels", "[", "]"}]}], "]"}], ";", 
+    RowBox[{"DistributeDefinitions", "[", 
+     RowBox[{
+     "integrationEndTime", ",", "multipleNutrientSurvivalAt", ",", 
+      "buildNutrientEquations", ",", "eqTemplate", ",", "alphaTraits", ",", 
+      "deltaTraits", ",", "zeroTraits", ",", "alphaPlaceholders", ",", 
+      "deltaPlaceholders", ",", "incond", ",", "n", ",", "T", ",", "Ttilde", 
+      ",", "Tbar", ",", "Tbar1new", ",", "Tbar2new", ",", "Tbar3new", ",", 
+      "t", ",", "S", ",", "lim", ",", "thresh", ",", "betaForNutrientSweeps", 
+      ",", "steadyStateTolerance", ",", "steadyStateMinimumTime", ",", 
+      "steadyStateCheckInterval", ",", "steadyStateAbundanceSafetyFactor"}], 
+     "]"}], ";", 
+    RowBox[{"nutrientSweepResults", "=", 
+     RowBox[{"ParallelMap", "[", 
+      RowBox[{
+       RowBox[{"Function", "[", 
+        RowBox[{"task", ",", 
+         RowBox[{"With", "[", 
+          RowBox[{
+           RowBox[{"{", 
+            RowBox[{"solveResult", "=", 
+             RowBox[{"multipleNutrientSurvivalAt", "[", 
+              RowBox[{
+               RowBox[{"task", "[", "\"\<alphaPresent\>\"", "]"}], ",", 
+               RowBox[{"task", "[", "\"\<poorNutrientCount\>\"", "]"}], ",", 
+               RowBox[{"task", "[", "\"\<theta\>\"", "]"}], ",", 
+               "betaForNutrientSweeps"}], "]"}]}], "}"}], ",", 
+           RowBox[{"Join", "[", 
+            RowBox[{"task", ",", 
+             RowBox[{"Association", "[", 
+              RowBox[{
+               RowBox[{"\"\<survivingFraction\>\"", "->", 
+                RowBox[{"First", "[", "solveResult", "]"}]}], ",", 
+               RowBox[{"\"\<stopTime\>\"", "->", 
+                RowBox[{"Last", "[", "solveResult", "]"}]}]}], "]"}]}], 
+            "]"}]}], "]"}]}], "]"}], ",", "nutrientSweepTasks", ",", 
+       RowBox[{"Method", "->", "\"\<CoarsestGrained\>\""}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Assemble", " ", "both", " ", "workbook", " ", "layouts", " ", "while", 
+     " ", "keeping", " ", "stop", " ", "times", " ", "in", " ", 
+     "nutrientSweepResults", " ", "for", " ", 
+     RowBox[{"diagnostics", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"thetaSweepSheets", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"Module", "[", 
+        RowBox[{
+         RowBox[{"{", "sweepRows", "}"}], ",", 
+         RowBox[{
+          RowBox[{"sweepRows", "=", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"#1", "[", "\"\<theta\>\"", "]"}], ",", 
+                RowBox[{"#1", "[", "\"\<survivingFraction\>\"", "]"}]}], 
+               "}"}], "&"}], ")"}], "/@", 
+            RowBox[{"Select", "[", 
+             RowBox[{"nutrientSweepResults", ",", 
+              RowBox[{
+               RowBox[{
+                RowBox[{
+                 RowBox[{"#1", "[", "\"\<kind\>\"", "]"}], "===", 
+                 "\"\<theta\>\""}], "&&", 
+                RowBox[{
+                 RowBox[{"#1", "[", "\"\<sheet\>\"", "]"}], "===", 
+                 RowBox[{"scenario", "[", "\"\<sheet\>\"", "]"}]}]}], "&"}]}],
+              "]"}]}]}], ";", 
+          RowBox[{
+           RowBox[{"scenario", "[", "\"\<sheet\>\"", "]"}], "->", 
+           RowBox[{"Prepend", "[", 
+            RowBox[{"sweepRows", ",", 
+             RowBox[{"{", 
+              RowBox[{"\"\<theta\>\"", ",", "\"\<surviving_fraction\>\""}], 
+              "}"}]}], "]"}]}]}]}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"scenario", ",", "nutrientScenarios"}], "}"}]}], "]"}]}], ";", 
+    RowBox[{"poorNutrientCountSheets", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"Module", "[", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"sheetName", ",", "sweepRows"}], "}"}], ",", 
+         RowBox[{
+          RowBox[{"sheetName", "=", 
+           RowBox[{"\"\<theta=\>\"", "<>", 
+            RowBox[{"ToString", "[", "fixedTheta", "]"}]}]}], ";", 
+          RowBox[{"sweepRows", "=", 
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"#1", "[", "\"\<poorNutrientCount\>\"", "]"}], ",", 
+                RowBox[{"#1", "[", "\"\<survivingFraction\>\"", "]"}]}], 
+               "}"}], "&"}], ")"}], "/@", 
+            RowBox[{"Select", "[", 
+             RowBox[{"nutrientSweepResults", ",", 
+              RowBox[{
+               RowBox[{
+                RowBox[{
+                 RowBox[{"#1", "[", "\"\<kind\>\"", "]"}], "===", 
+                 "\"\<poor\>\""}], "&&", 
+                RowBox[{
+                 RowBox[{"#1", "[", "\"\<sheet\>\"", "]"}], "===", 
+                 "sheetName"}]}], "&"}]}], "]"}]}]}], ";", 
+          RowBox[{"sheetName", "->", 
+           RowBox[{"Prepend", "[", 
+            RowBox[{"sweepRows", ",", 
+             RowBox[{"{", 
+              RowBox[{
+              "\"\<number_of_poor_nutrients\>\"", ",", 
+               "\"\<surviving_fraction\>\""}], "}"}]}], "]"}]}]}]}], "]"}], 
+       ",", 
+       RowBox[{"{", 
+        RowBox[{"fixedTheta", ",", "thetaCases"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Export", " ", "both", " ", "workbooks", " ", "beside", " ", "the", " ", 
+     "notebook", " ", "after", " ", "all", " ", "parallel", " ", "tasks", " ", 
+     RowBox[{"finish", "."}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"outputDirectory", "=", 
+     RowBox[{"Quiet", "[", 
+      RowBox[{"Check", "[", 
+       RowBox[{
+        RowBox[{"NotebookDirectory", "[", "]"}], ",", "$Failed"}], "]"}], 
+      "]"}]}], ";", 
+    RowBox[{"If", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"!", 
+        RowBox[{"StringQ", "[", "outputDirectory", "]"}]}], "||", 
+       RowBox[{"!", 
+        RowBox[{"DirectoryQ", "[", "outputDirectory", "]"}]}]}], ",", 
+      RowBox[{"outputDirectory", "=", 
+       RowBox[{"Directory", "[", "]"}]}]}], "]"}], ";", 
+    RowBox[{"thetaSweepWorkbook", "=", 
+     RowBox[{"FileNameJoin", "[", 
+      RowBox[{"{", 
+       RowBox[{
+       "outputDirectory", ",", 
+        "\"\<survival_vs_theta_by_nutrient_scenario.xlsx\>\""}], "}"}], 
+      "]"}]}], ";", 
+    RowBox[{"poorNutrientWorkbook", "=", 
+     RowBox[{"FileNameJoin", "[", 
+      RowBox[{"{", 
+       RowBox[{
+       "outputDirectory", ",", 
+        "\"\<survival_vs_number_of_poor_nutrients.xlsx\>\""}], "}"}], "]"}]}],
+     ";", 
+    RowBox[{"Export", "[", 
+     RowBox[{
+     "thetaSweepWorkbook", ",", "thetaSweepSheets", ",", "\"\<XLSX\>\""}], 
+     "]"}], ";", 
+    RowBox[{"Export", "[", 
+     RowBox[{
+     "poorNutrientWorkbook", ",", "poorNutrientCountSheets", ",", 
+      "\"\<XLSX\>\""}], "]"}], ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.9936391775229*^9, 3.993639178535047*^9}, 
+   3.993678584792841*^9, 3.993680453563897*^9},
+ CellLabel->"In[30]:=",ExpressionUUID->"32783740-5d0a-41c5-8843-713587a534d3"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{2560, 1382},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+FrontEndVersion->"14.0 for Mac OS X ARM (64-bit) (December 12, 2023)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"73d0c4ed-1891-4b81-a08f-ec4d4afccb4f"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 234, 4, 98, "Title",ExpressionUUID->"4d0b0f06-8607-4bc6-896c-a2fd11f6102f"],
+Cell[817, 28, 604, 12, 81, "Text",ExpressionUUID->"8690b071-b9df-4e1b-acaa-d3033d209f7b"],
+Cell[CellGroupData[{
+Cell[1446, 44, 119, 0, 54, "Subsection",ExpressionUUID->"11e62eb9-1d34-4a20-aa3c-352c76de0b42"],
+Cell[1568, 46, 248, 4, 35, "Text",ExpressionUUID->"8b4b3236-97e3-4c50-87a2-eebe26e386a4"],
+Cell[1819, 52, 1677, 38, 136, "Input",ExpressionUUID->"2cf933a6-ce85-45ce-879a-d9b3a3172001"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3533, 95, 125, 0, 54, "Subsection",ExpressionUUID->"de9be5d9-8061-42d7-958a-0506aa704040"],
+Cell[3661, 97, 346, 5, 35, "Text",ExpressionUUID->"681d911c-81f6-46ab-86df-0e607ab07693"],
+Cell[4010, 104, 21011, 552, 724, "Input",ExpressionUUID->"4ab0f33f-6fbc-4157-b5bf-f7d6bd170fd2"],
+Cell[25024, 658, 5076, 123, 304, "Input",ExpressionUUID->"7a4d10a2-5244-4a42-9bd7-8a9e8bdade11"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[30137, 786, 161, 3, 54, "Subsection",ExpressionUUID->"a13896cc-52f7-40f8-950e-09b6b0ed2773"],
+Cell[30301, 791, 376, 5, 35, "Text",ExpressionUUID->"170001d5-1874-4a06-8ad8-6739943c11b2"],
+Cell[30680, 798, 17782, 427, 1212, "Input",ExpressionUUID->"32783740-5d0a-41c5-8843-713587a534d3"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
