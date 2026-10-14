@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     50019,       1262]
-NotebookOptionsPosition[     48490,       1229]
-NotebookOutlinePosition[     48887,       1245]
-CellTagsIndexPosition[     48844,       1242]
+NotebookDataLength[     50084,       1263]
+NotebookOptionsPosition[     48555,       1230]
+NotebookOutlinePosition[     48952,       1246]
+CellTagsIndexPosition[     48909,       1243]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -28,16 +28,17 @@ a2fd11f6102f"],
 
 Cell["\<\
 Disclaimer : This  notebook  was  written  and  revised  with  assistance  \
-from  OpenAI  Codex . The  author  remains  responsible  for  verifying  all  \
-results .
+from  OpenAI  Codex (GPT-5.6 Sol) . The  author  remains  responsible  for  \
+verifying  all  results .
    
 This  notebook  starts  with  ClearAll  and  extends  the  model  to  several \
  shared  and  local  nutrient  pools . Evaluate  its  setup, equations, and  \
 parametric  solver  in  order  before  running  the  export  cell . This  \
 notebook  reproduces  data  used  in  figure  4.\
 \>", "Text",
- CellChangeTimes->{{3.993724893678649*^9, 
-  3.993724912096208*^9}},ExpressionUUID->"8690b071-b9df-4e1b-acaa-\
+ CellChangeTimes->{{3.993724893678649*^9, 3.993724912096208*^9}, {
+  4.000976628159512*^9, 
+  4.0009766284335938`*^9}},ExpressionUUID->"8690b071-b9df-4e1b-acaa-\
 d3033d209f7b"],
 
 Cell[CellGroupData[{
@@ -1246,22 +1247,22 @@ CellTagsIndex->{}
 Notebook[{
 Cell[CellGroupData[{
 Cell[580, 22, 234, 4, 98, "Title",ExpressionUUID->"4d0b0f06-8607-4bc6-896c-a2fd11f6102f"],
-Cell[817, 28, 604, 12, 81, "Text",ExpressionUUID->"8690b071-b9df-4e1b-acaa-d3033d209f7b"],
+Cell[817, 28, 669, 13, 81, "Text",ExpressionUUID->"8690b071-b9df-4e1b-acaa-d3033d209f7b"],
 Cell[CellGroupData[{
-Cell[1446, 44, 119, 0, 54, "Subsection",ExpressionUUID->"11e62eb9-1d34-4a20-aa3c-352c76de0b42"],
-Cell[1568, 46, 248, 4, 35, "Text",ExpressionUUID->"8b4b3236-97e3-4c50-87a2-eebe26e386a4"],
-Cell[1819, 52, 1677, 38, 136, "Input",ExpressionUUID->"2cf933a6-ce85-45ce-879a-d9b3a3172001"]
+Cell[1511, 45, 119, 0, 54, "Subsection",ExpressionUUID->"11e62eb9-1d34-4a20-aa3c-352c76de0b42"],
+Cell[1633, 47, 248, 4, 35, "Text",ExpressionUUID->"8b4b3236-97e3-4c50-87a2-eebe26e386a4"],
+Cell[1884, 53, 1677, 38, 136, "Input",ExpressionUUID->"2cf933a6-ce85-45ce-879a-d9b3a3172001"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[3533, 95, 125, 0, 54, "Subsection",ExpressionUUID->"de9be5d9-8061-42d7-958a-0506aa704040"],
-Cell[3661, 97, 346, 5, 35, "Text",ExpressionUUID->"681d911c-81f6-46ab-86df-0e607ab07693"],
-Cell[4010, 104, 21011, 552, 724, "Input",ExpressionUUID->"4ab0f33f-6fbc-4157-b5bf-f7d6bd170fd2"],
-Cell[25024, 658, 5076, 123, 304, "Input",ExpressionUUID->"7a4d10a2-5244-4a42-9bd7-8a9e8bdade11"]
+Cell[3598, 96, 125, 0, 54, "Subsection",ExpressionUUID->"de9be5d9-8061-42d7-958a-0506aa704040"],
+Cell[3726, 98, 346, 5, 35, "Text",ExpressionUUID->"681d911c-81f6-46ab-86df-0e607ab07693"],
+Cell[4075, 105, 21011, 552, 724, "Input",ExpressionUUID->"4ab0f33f-6fbc-4157-b5bf-f7d6bd170fd2"],
+Cell[25089, 659, 5076, 123, 304, "Input",ExpressionUUID->"7a4d10a2-5244-4a42-9bd7-8a9e8bdade11"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[30137, 786, 161, 3, 54, "Subsection",ExpressionUUID->"a13896cc-52f7-40f8-950e-09b6b0ed2773"],
-Cell[30301, 791, 376, 5, 35, "Text",ExpressionUUID->"170001d5-1874-4a06-8ad8-6739943c11b2"],
-Cell[30680, 798, 17782, 427, 1212, "Input",ExpressionUUID->"32783740-5d0a-41c5-8843-713587a534d3"]
+Cell[30202, 787, 161, 3, 54, "Subsection",ExpressionUUID->"a13896cc-52f7-40f8-950e-09b6b0ed2773"],
+Cell[30366, 792, 376, 5, 35, "Text",ExpressionUUID->"170001d5-1874-4a06-8ad8-6739943c11b2"],
+Cell[30745, 799, 17782, 427, 1212, "Input",ExpressionUUID->"32783740-5d0a-41c5-8843-713587a534d3"]
 }, Open  ]]
 }, Open  ]]
 }

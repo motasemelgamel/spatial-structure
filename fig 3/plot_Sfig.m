@@ -1,5 +1,5 @@
 % Disclaimer: This script was written and revised with assistance from
-% OpenAI Codex. The author remains responsible for verifying all results.
+% OpenAI Codex (GPT-5.6 Sol). The author remains responsible for verifying all results.
 
 clearvars
 close all
