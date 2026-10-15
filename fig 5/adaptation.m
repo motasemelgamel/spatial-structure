@@ -6,8 +6,6 @@ close all
 clc
 
 % Simulate the model for several adaptive local-resource response rates.
-
-% Generate a reproducible set of species-specific resource-use traits.
 masterSeed = 1;
 traitStream = RandStream('Threefry', 'Seed', masterSeed);
 traitStream.Substream = 1;
@@ -72,8 +70,7 @@ end
 % tMax in the corresponding eta trajectory.
 survivingSpecies = finalAbundances > model.extinctionThreshold;
 
-% Locate this source script so the plain Excel workbook is saved beside it,
-% including when MATLAB runs a temporary Editor_* copy of the script.
+% Locate this source script so the Excel workbook is saved beside it.
 candidateDirectories = {};
 try
     activeFilename = matlab.desktop.editor.getActiveFilename;
@@ -81,7 +78,6 @@ try
         candidateDirectories{end + 1} = fileparts(activeFilename);
     end
 catch
-    % MATLAB may be running without the desktop Editor.
 end
 scriptFullPath = mfilename('fullpath');
 if ~isempty(scriptFullPath)
@@ -107,8 +103,7 @@ if isempty(scriptDirectory)
     error('Could not locate the folder containing adaptation.m.')
 end
 
-% Export one plain worksheet per eta. Abundances and theta values share the
-% same time grid and are separated by one blank column for readability.
+% Export one worksheet per eta.
 outputWorkbookPath = fullfile( ...
     scriptDirectory, 'adaptation_dynamics.xlsx');
 abundanceHeaders = [{'time'}, arrayfun(@(speciesIndex) ...
@@ -126,8 +121,7 @@ thetaDataRange = sprintf('%s2', ...
 for etaIndex = 1:nEta
     sheetName = sprintf('eta=%.3g', etaValues(etaIndex));
 
-    % Overwrite only this eta worksheet so rerunning the script refreshes
-    % its data without adding spreadsheet formatting or Excel tables.
+    % Write this eta worksheet.
     writecell(abundanceHeaders, outputWorkbookPath, ...
         'Sheet', sheetName, 'Range', 'A1', ...
         'WriteMode', 'overwritesheet')
@@ -140,7 +134,6 @@ for etaIndex = 1:nEta
         'Range', thetaDataRange)
 end
 
-% Apply the shared figure style.
 set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');
@@ -150,8 +143,6 @@ axesLineWidth = 1.5;
 figurePosition = [50 80 1800 850];
 speciesColors = lines(model.S);
 
-% Use a common abundance range so changes across eta panels are directly
-% comparable. Display only reference ticks reached by the plotted range.
 maximumAbundance = max(abundanceHistory, [], 'all');
 abundanceUpperLimit = maximumAbundance;
 candidateAbundanceTicks = [1e-2, 1e0, 1e2];
@@ -181,7 +172,7 @@ for etaIndex = 1:nEta
         speciesColors, tMax, figureFontSize, curveLineWidth, ...
         axesLineWidth)
 
-    % Export the line plots as true vector objects inside the SVG file.
+    % Export the line plots as true vector objects.
     svgOutputPath = fullfile(scriptDirectory, ...
         sprintf('adaptation_eta_%.3g.svg', etaValues(etaIndex)));
     print(figureHandle, svgOutputPath, '-dsvg', '-painters')
@@ -307,9 +298,6 @@ while currentTime < tMax
         (model.S .* R - sum(T)) - model.gamma .* R .* ...
         sum(model.alpha .* (1 - theta) .* N);
 
-    % Bound the explicit step using resource removal, demographic change,
-    % and theta adaptation. Extinct species do not contribute to the two
-    % species-level rate bounds because their N_i and theta_i are frozen.
     survivingNow = N > model.extinctionThreshold;
     localRemovalRate = beta + ...
         model.alpha .* model.gamma .* theta .* N;
@@ -337,7 +325,6 @@ while currentTime < tMax
         explicitSafetyFactor ./ maximumCurrentRate);
     dt = min(dt, tMax - currentTime);
 
-    % Land exactly on each requested output time.
     if sampleIndex <= nSamples
         dt = min(dt, sampleTimes(sampleIndex) - currentTime);
     end
@@ -352,7 +339,7 @@ while currentTime < tMax
     TNew = T + dt .* dT;
     RNew = R + dt .* dR;
 
-    % Force extinct populations to zero immediately and permanently.
+    % Force extinct populations to zero.
     NNew(NNew < model.extinctionThreshold) = 0;
 
     % Advance theta semi-implicitly with growth held fixed during this step:

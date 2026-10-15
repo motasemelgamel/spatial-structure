@@ -23,7 +23,7 @@ model.R0 = model.Rstar;
 model.T0 = model.Rstar;
 model.extinctionThreshold = 1e-3;
 
-% Fixed diffusion rate and the requested one-dimensional parameter sweeps.
+% Fixed diffusion rate and parameter sweeps.
 beta = 1;
 nSweepPoints = 100;
 etaSweepValues = linspace(0, 1, nSweepPoints);
@@ -32,8 +32,7 @@ sigmaSweepValues = linspace(0, 1, nSweepPoints);
 etaForSigmaSweep = [1e-2, 1e-1, 1e0, 1e1];
 
 % Sample 20 independent communities once and reuse the same communities at
-% every parameter value. This paired design reduces community-sampling noise
-% when comparing curves, while each trajectory has an independent noise path.
+% every parameter value, while each trajectory has an independent noise path.
 nReplicates = 20;
 alphaByReplicate = zeros(nReplicates, model.S);
 for replicateIndex = 1:nReplicates
@@ -42,7 +41,7 @@ for replicateIndex = 1:nReplicates
         1 + 4 .* rand(traitStream, 1, model.S);
 end
 
-% Simulation settings retained from the stochastic adaptive model.
+% Simulation settings.
 tMax = 5000;
 explicitSafetyFactor = 0.5;
 maximumDt = min(0.001, explicitSafetyFactor ./ ...
@@ -148,7 +147,7 @@ exampleNoiseStream.Substream = ...
 exampleSurvivingSpecies = ...
     exampleFinalAbundances > model.extinctionThreshold;
 
-% Apply the shared presentation-scale figure formatting.
+% figure settings.
 set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');
@@ -265,8 +264,7 @@ function figureHandle = plotExampleTrajectory(figureNumber, timeValues, ...
     abundanceHistory, thetaHistory, survivingSpecies, eta, sigma, ...
     extinctionThreshold, figureFontSize, curveLineWidth, axesLineWidth)
 
-% Plot the stored example as two square side-by-side panels, matching the
-% panel geometry and spacing used in optimal_beta_final.m.
+% Plot the stored example as two square side-by-side panels.
 nSpecies = size(abundanceHistory, 2);
 if ~isequal(size(thetaHistory), size(abundanceHistory)) || ...
         size(abundanceHistory, 1) ~= numel(timeValues) || ...

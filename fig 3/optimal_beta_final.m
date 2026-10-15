@@ -311,7 +311,7 @@ if ~isempty(burnFileStore)
 end
 fprintf('Figure 2 data written to: %s\n', burnSurvivalFile)
 
-%% Plot
+%% Plot (requires loading simulation output.mat - plot_fig.m calculates statistics)
 set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');

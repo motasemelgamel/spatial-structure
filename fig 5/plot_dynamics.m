@@ -7,7 +7,7 @@ clc
 
 % Reproduce the saved abundance and theta dynamics without rerunning the
 % stochastic consumer-resource simulation.
-inputFileName = 'adaptation_dynamics.xlsx';
+inputFileName = 'adaptation_dynamics_with_noise.xlsx';
 
 % Locate the workbook beside this script, including when MATLAB runs a
 % temporary Editor_* copy from another working directory.
