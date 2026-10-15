@@ -31,7 +31,7 @@ explicitSafetyFactor = 0.5;
 maximumDtValues = min(0.001, explicitSafetyFactor ./ ...
     ((model.S + 1) .* betaValues));
 
-% Use a fixed deterministic burn-in without testing for steady state.
+% Use a fixed deterministic burn-in.
 burnTime = 3000;
 
 nBeta = numel(betaValues);
