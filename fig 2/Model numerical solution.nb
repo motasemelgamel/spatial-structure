@@ -27,7 +27,7 @@ Cell["Model numerical solution", "Title",
 fd387591cbbd"],
 
 Cell["\<\
-Disclaimer: This notebook was written and revised with assistance from OpenAI \
+Disclosure: This notebook was written and revised with assistance from OpenAI \
 Codex (GPT-5.6 Sol). The author remains responsible for verifying all results.\
 \>", "Text",
  CellChangeTimes->{{3.993680872869659*^9, 3.993680874473748*^9}, {

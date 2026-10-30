@@ -27,7 +27,7 @@ Cell["Multiple-nutrient model numerical solution", "Title",
 a2fd11f6102f"],
 
 Cell["\<\
-Disclaimer : This  notebook  was  written  and  revised  with  assistance  \
+Disclosure : This  notebook  was  written  and  revised  with  assistance  \
 from  OpenAI  Codex (GPT-5.6 Sol) . The  author  remains  responsible  for  \
 verifying  all  results .
    
